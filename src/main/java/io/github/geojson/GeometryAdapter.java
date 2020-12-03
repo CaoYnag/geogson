@@ -297,11 +297,11 @@ public class GeometryAdapter implements JsonSerializer<Geometry>, JsonDeserializ
    */
   private Polygon toPolygon(JsonArray coordinates) {
     int size = coordinates.size();
-    LinearRing shell = geomFactory.createLinearRing(toCoordinates(coordinates.get(0).getAsJsonArray()));
+    LinearRing shell = geomFactory.createLinearRing(toCoordinates(coordinates.get(0).getAsJsonArray(), true));
     if (size > 1) {
       LinearRing[] holes = new LinearRing[size - 1];
       for (int i = 0; i < size - 1; i++) {
-        holes[i] = geomFactory.createLinearRing(toCoordinates(coordinates.get(i + 1).getAsJsonArray()));
+        holes[i] = geomFactory.createLinearRing(toCoordinates(coordinates.get(i + 1).getAsJsonArray(), true));
       }
       return geomFactory.createPolygon(shell, holes);
     } else {
@@ -314,9 +314,9 @@ public class GeometryAdapter implements JsonSerializer<Geometry>, JsonDeserializ
    * @param coordinates
    * @return
    */
-  private Coordinate[] toCoordinates(JsonArray coordinates) {
+  private Coordinate[] toCoordinates(JsonArray coordinates, boolean close) {
     int size = coordinates.size();
-    Coordinate[] coords = new Coordinate[size];
+    Coordinate[] coords = new Coordinate[close ? size + 1 : size];
     for (int i = 0; i < size; i++) {
       JsonArray pts = coordinates.get(i).getAsJsonArray();
       if (pts.size() > 2) {
@@ -325,7 +325,12 @@ public class GeometryAdapter implements JsonSerializer<Geometry>, JsonDeserializ
         coords[i] = new Coordinate(pts.get(0).getAsDouble(), pts.get(1).getAsDouble());
       }
     }
+    if(close) coords[size] = coords[0];
+
     return coords;
+  }
+  private Coordinate[] toCoordinates(JsonArray coordinates){
+    return toCoordinates(coordinates, false);
   }
 
   /**
